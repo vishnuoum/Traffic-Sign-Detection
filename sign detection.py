@@ -1,3 +1,4 @@
+# import libraries
 import cv2
 import pandas as pd
 import numpy as np
@@ -8,32 +9,38 @@ import threading
 import pyttsx3
 from math import floor
 
+
+# initialize text to speech engine
 engine = pyttsx3.init()
 
+# function to convert text to speech
 def speak(param):
     engine.say(param)
     engine.runAndWait()
 
-
+# distance finder function
 def distanceFinder( face_width_in_frame, real_face_width=0.9144, Focal_Length=190):
     distance = (real_face_width * Focal_Length)/face_width_in_frame
     return distance
 
+# load labels
 labels=pd.read_csv("additional/label_names.csv")
 
 
 
 
 # Loading trained CNN model to use it later when classifying from 4 groups into one of 43 classes
-model = load_model('additional/model-23x23.h5')
+model = load_model('additional/model-32x32.h5')
 
 # Loading mean image to use for preprocessing further
 # Opening file for reading in binary mode
 with open('additional/mean_image_rgb.pickle', 'rb') as f:
     mean = pickle.load(f, encoding='latin1')  # dictionary type
     
-print(mean['mean_image_rgb'].shape)
+# print(mean['mean_image_rgb'].shape)
 
+
+# path yolo model weights and configuration files
 path_to_weights = 'additional/yolov3_ts_train_5000.weights'
 path_to_cfg = 'additional/yolov3_ts_test.cfg'
 
@@ -70,7 +77,7 @@ print(type(colours))  # <class 'numpy.ndarray'>
 print(colours.shape)  # (43, 3)
 print(colours[0])  # [25  65 200]
 
-
+# reading video (specify 0 for webcam)
 video = cv2.VideoCapture('traffic.mp4')
 
 
@@ -188,6 +195,8 @@ while True:
 
                 # if(distanceFinder(face_width_in_frame=box_width)==50):
                 # print(floor(distanceFinder(face_width_in_frame=box_width)))
+
+                # checking if the sign is 4m from the camera
                 if(floor(distanceFinder(face_width_in_frame=box_width))==4):
                     signs.append(labels['SignName'][prediction])
 
@@ -205,9 +214,11 @@ while True:
                 cv2.putText(frame, text_box_current, (x_min, y_min - 5),
                             cv2.FONT_HERSHEY_SIMPLEX, 0.5, colour_box_current, 2)
 
+    # show frame as output
     cv2.imshow('Frame',frame)
     
     try:
+        # alert users about traffic sign
         if(len(signs)!=0):
             words=" and ".join(signs)
             # print(type(words))
@@ -217,7 +228,7 @@ while True:
     except Exception as e:
         print(e)
     
-
+    # press 'q' to quit the program
     if cv2.waitKey(25) & 0xFF == ord('q'):
         break
 
